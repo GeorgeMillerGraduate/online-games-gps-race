@@ -1,0 +1,24 @@
+ROUTE EXPLORER — EDITORIAL ATLAS EDITION
+
+Extract this ZIP directly into public_html/apps/gps-race/, replacing existing
+files. It contains index.html, css/, js/ and images/ with no enclosing folder.
+Upload all files together and press Ctrl+F5. Existing app links stay the same.
+
+New header: compact compass masthead, Westminster engraving, Home,
+Applications, Journal and Qualifications links. New atlas sidebar artwork.
+The route form, working map, settings and statistics share a compact layout.
+
+The map is real MapLibre, with the supplied geocoder, road-data pipeline,
+A* and Dijkstra algorithms. No illustrated substitute or sample route is
+used. Start and destination remain empty until you choose them.
+
+The supplied map engine needs WebGL2, online map tiles, geocoding and road
+data services. This preview browser lacked WebGL2, so live map rendering
+and online route completion could not be verified here. Desktop, tablet
+and phone page layouts were inspected.
+
+Baseline tests: the original uploaded ZIP already passes 21/24 regression
+cases, with three snapping/pipeline failures; its interface test also fails
+a running-state assertion. The redesigned version showed the same results.
+These are recorded in tests/RESULTS.txt rather than reported as passing.
+The pathfinding, graph, geocoder and road-data logic are preserved.

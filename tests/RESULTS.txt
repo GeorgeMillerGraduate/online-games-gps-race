@@ -1,0 +1,12 @@
+EDITORIAL REDESIGN VALIDATION
+
+Original upload and redesigned page: regression suite 21/24.
+Existing failures: reachable-snap repair selects node 1 instead of 2 in two
+cases; retry pipeline selects node 3 instead of 4. Interface adapter test
+initialises, wires controls and validates geocoder, then fails its expected
+running-state assertion. These failures reproduce unchanged in the original
+upload. No passing claim is made for those cases.
+
+Browser layout checked at desktop, 375px and 800px frame widths. No
+horizontal document overflow at phone or tablet widths. Custom artwork and
+new header load. Browser WebGL2 unavailable, so no live route validation.

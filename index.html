@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Explore A* and Dijkstra pathfinding on a real interactive road map.">
+<title>Route Explorer — Jenga-Code</title>
+<link rel="canonical" href="https://jenga-code.com/apps/gps-race/">
+<link rel="stylesheet" href="js/maplibre-gl.css">
+<link rel="stylesheet" href="css/style.css?v=atlas-1">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to map</a>
+<header class="site-header"><a class="brand" href="/" aria-label="Jenga-Code homepage"><svg class="compass-mark" aria-hidden="true" viewBox="0 0 64 64" width="54" height="54"><circle cx="32" cy="32" r="23" fill="none" stroke="currentColor" stroke-width="1"/><path d="M32 2 38 26 62 32 38 38 32 62 26 38 2 32 26 26Z" fill="none" stroke="currentColor"/><path d="M32 7 32 32 26 26ZM57 32 32 32 38 26ZM32 57 32 32 38 38ZM7 32 32 32 26 38Z" fill="currentColor"/><circle cx="32" cy="32" r="3" fill="currentColor"/></svg><span>Jenga-Code<small>ALGORITHMS · MAPS · REAL-WORLD IDEAS</small></span></a><nav aria-label="Main navigation"><a href="/">Home</a><a href="/apps/" aria-current="page">Applications</a><a href="/blog/">Journal</a><a href="/qualifications/">Qualifications</a></nav></header>
+<main id="main" class="workspace">
+<aside class="editorial"><img src="images/atlas-study.webp" width="800" height="1200" alt="An engraved London atlas with a brass compass, pencil, olive leaves and copper thread" fetchpriority="high"><div class="editorial-copy"><h2>Every route<br>has a reason.</h2><span class="short-rule"></span><p>Explore how algorithms find a path.</p></div></aside>
+<section class="route-workspace" aria-labelledby="pageTitle"><h1 id="pageTitle">Route Explorer</h1>
+<div class="route-controls">
+<!-- START -->
+<div class="location-control">
+<span class="location-marker start-marker">
+                            A
+                        </span>
+<div class="location-input-wrap">
+<label for="startLocation">
+                                Start
+                            </label>
+<input autocomplete="off" id="startLocation" placeholder="Type a starting place…" type="text">
+</div>
+<button class="map-pick-button" id="pickStart" title="Choose start on map" type="button">
+                            ◎
+                        </button>
+</div>
+<!-- SWAP -->
+<button class="swap-route-button" id="swapRoute" title="Swap locations" type="button">
+                        ⇅
+                    </button>
+<!-- DESTINATION -->
+<div class="location-control">
+<span class="location-marker destination-marker">
+                            B
+                        </span>
+<div class="location-input-wrap">
+<label for="destinationLocation">
+                                Destination
+                            </label>
+<input autocomplete="off" id="destinationLocation" placeholder="Type a destination…" type="text">
+</div>
+<button class="map-pick-button" id="pickDestination" title="Choose destination on map" type="button">
+                            ◎
+                        </button>
+</div>
+<!-- FIND ROUTE -->
+<button class="find-route-button" id="findRoute" type="button">
+                        Find route
+                    </button>
+</div>
+<div class="map-column">
+<!-- MAP TOOLBAR -->
+<div class="map-toolbar">
+<div class="map-toolbar-group">
+<button class="tool-button active" id="moveMapTool" type="button">
+                                Move
+                            </button>
+<button class="tool-button" id="startPointTool" type="button">
+                                Set start
+                            </button>
+<button class="tool-button" id="destinationPointTool" type="button">
+                                Set destination
+                            </button>
+</div>
+<div class="map-toolbar-group">
+<button class="tool-button" id="resetView" type="button">
+                                Reset view
+                            </button>
+<button class="tool-button" id="fullscreenMap" type="button">
+                                Fullscreen
+                            </button>
+</div>
+</div>
+<select id="basemapSelect" aria-label="Basemap">
+<option value="road">
+                                Road map
+                            </option>
+<option value="satellite">
+                                Satellite / aerial
+                            </option>
+</select><!-- MAP KEY -->
+
+<p class="snap-summary" id="snapSummary">
+                        A′ and B′ will show the exact road nodes used by the search.
+                    </p>
+<!-- MAPLIBRE OWNS THIS ELEMENT -->
+<div class="map-container" id="map"></div><div class="map-key">
+
+
+<span>
+<i class="legend-swatch visited"></i>
+                            Explored
+                        </span>
+<span>
+<i class="legend-swatch frontier"></i>
+                            Frontier
+                        </span>
+<span>
+<i class="legend-swatch final-route"></i>
+                            Final route
+                        </span>
+</div>
+</div>
+<!-- =============================================
+                     ALGORITHM PANEL
+                     ============================================= -->
+<div class="algorithm-status" id="algorithmStatus"><span class="status-dot"></span><span id="statusText" role="status" aria-live="polite">Loading…</span></div></section><aside class="algorithm-panel">
+<!-- INTRO -->
+<div class="panel-section algorithm-heading"><h2>Find a route</h2></div>
+<!-- ALGORITHM -->
+<div class="panel-section">
+<label class="control-label" for="algorithmSelect">
+                            Algorithm
+                        </label>
+<select id="algorithmSelect">
+<option selected value="astar">
+                                A* Search
+                            </option>
+<option value="dijkstra">
+                                Dijkstra
+                            </option>
+</select>
+</div>
+<!-- HEURISTIC -->
+<div class="panel-section">
+<label class="control-label" for="heuristicSelect">
+                            A* heuristic
+                        </label>
+<select id="heuristicSelect">
+<option selected value="distance">
+                                Straight-line distance
+                            </option>
+<option value="none">
+                                None
+                            </option>
+</select>
+</div>
+<!-- SPEED -->
+<div class="panel-section">
+<div class="range-heading">
+<label for="searchSpeed">
+                                Animation speed
+                            </label>
+<output id="searchSpeedValue">
+                                Medium
+                            </output>
+</div>
+<input id="searchSpeed" max="100" min="1" type="range" value="55">
+</div>
+<!-- SEARCH CONTROLS -->
+<div class="panel-section">
+<div class="algorithm-buttons">
+<button class="run-button" id="runSearch" type="button">
+                                ▶ Run A*
+                            </button>
+<button class="pause-button" id="pauseSearch" type="button">
+                                Pause
+                            </button>
+<button class="clear-button" id="clearSearch" type="button">
+                                Clear
+                            </button>
+</div>
+</div>
+<!-- STATISTICS -->
+<div class="panel-section statistics-section">
+<span class="panel-small-heading">
+                            SEARCH STATISTICS
+                        </span>
+<div class="stat-grid">
+<div class="stat-card">
+<span>
+                                    Visited
+                                </span>
+<strong id="visitedNodes">
+                                    0
+                                </strong>
+</div>
+<div class="stat-card">
+<span>
+                                    Frontier
+                                </span>
+<strong id="frontierNodes">
+                                    0
+                                </strong>
+</div>
+<div class="stat-card">
+<span>
+                                    Distance
+                                </span>
+<strong id="routeDistance">
+                                    —
+                                </strong>
+</div>
+<div class="stat-card">
+<span>
+                                    Search time
+                                </span>
+<strong id="searchTime">
+                                    —
+                                </strong>
+</div>
+</div>
+</div>
+<details class="algorithm-info"><summary>How it works</summary><p>A* uses distance travelled plus an estimate to the destination. Dijkstra uses distance travelled alone.</p>
+<div class="panel-section formula-section">
+<span class="panel-small-heading">
+                            A* PRIORITY
+                        </span>
+<div class="formula">
+                            f(n) = g(n) + h(n)
+                        </div>
+</div>
+</details></aside></main><footer class="site-footer"><span>Jenga-Code / Maps &amp; algorithms</span><nav aria-label="Footer navigation"><a href="/apps/">All applications</a><a href="/privacy/">Privacy</a></nav></footer><script type="module">
+
+
+            /* -----------------------------------------------------
+             * MAPLIBRE
+             * ----------------------------------------------------- */
+
+            import * as maplibregl
+                    from "./js/maplibre-gl.mjs";
+
+
+            window.maplibregl = maplibregl;
+
+
+            console.log(
+                    "MapLibre module loaded:",
+                    maplibregl
+                    );
+
+
+
+            /* -----------------------------------------------------
+             * ROUTE EXPLORER
+             * ----------------------------------------------------- */
+
+            await import("./js/utils.js");
+
+            await import("./js/priority-queue.js");
+
+            await import("./js/map.js?v=atlas-1");
+
+            await import(
+                    "./js/geocoder.js?v=20261004-autocomplete"
+                    );
+
+            await import(
+                    "./js/map-data.js?v=atlas-1"
+                    );
+
+            await import("./js/graph.js");
+
+            await import("./js/astar.js");
+
+            await import("./js/visualiser.js?v=atlas-1");
+
+            await import("./js/routes.js");
+
+            await import(
+                    "./js/app.js?v=atlas-1"
+                    );
+
+
+
+            /* -----------------------------------------------------
+             * DEVELOPMENT CHECK
+             * ----------------------------------------------------- */
+
+            console.log(
+                    "-----------------------------------"
+                    );
+
+            console.log(
+                    "Route Explorer dependency check"
+                    );
+
+            console.log(
+                    "-----------------------------------"
+                    );
+
+
+            console.log(
+                    "MapLibre:",
+                    window.maplibregl
+                    ? "OK"
+                    : "FAILED"
+                    );
+
+
+            console.log(
+                    "RouteMap:",
+                    window.RouteMap
+                    ? "OK"
+                    : "FAILED"
+                    );
+
+
+            console.log(
+                    "RouteRenderer:",
+                    window.RouteRenderer
+                    ? "OK"
+                    : "FAILED"
+                    );
+
+
+            console.log(
+                    "RouteExplorerApp:",
+                    window.RouteExplorerApp
+                    ? "OK"
+                    : "FAILED"
+                    );
+
+
+            console.log(
+                    "-----------------------------------"
+                    );
+
+
+        </script>
+</body></html>
